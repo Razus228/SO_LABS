@@ -1,0 +1,58 @@
+flp_to_ram:
+
+    ; read HTS address
+
+    call    read_hts_addr
+
+    cmp     byte [operation_flag], 0
+    je      error
+
+    ; read RAM address
+
+    call    read_ram_addr
+
+    cmp     byte [operation_flag], 0
+    je      error
+
+    ; read N
+
+    call    break_line
+    mov     si, n_in_str
+    mov     cx, n_in_str_len
+    call    print_str
+
+    call    read_input
+
+    mov     ax, 0
+    call    check_num_input
+
+    cmp     byte [operation_flag], 0
+    je      error
+
+    mov     di, n
+    mov     si, input_buffer
+    call    atoi
+
+    ; read data from floppy
+
+    mov     es, [address + 0]
+    mov     bx, [address + 2]
+
+    mov     ah, DSK_READ
+    mov     al, [n]
+    mov     ch, [hts + 2]
+    mov     cl, [hts + 4]
+    mov     dh, [hts + 0]
+    mov     dl, 0
+
+    int     INT_DSK
+
+    ; print error code
+    
+    call    display_error_code
+
+    ; print the data read
+
+    call    paginated_output
+
+    jmp     terminate
