@@ -96,130 +96,138 @@ key_to_floppy_end:
 	jmp start
 
 
-floppy_to_ram:	
-	call cursor_newline
-	mov word [print_addr], repeat_prompt
-	call print_str
+floppy_to_ram:
+    ; Start of the code block
+
+    call cursor_newline         ; Call function to move cursor to a new line
+    mov word [print_addr], repeat_prompt ; Store repeat_prompt address in print_addr
+    call print_str              ; Call function to print a string
 
 floppy2ram_repeat:
-	call clear_current_line
-	mov byte [char_count], 5
-	call read_int
+    call clear_current_line     ; Call function to clear the current line
+    mov byte [char_count], 5    ; Set char_count to 5
+    call read_int               ; Call function to read an integer
 
-	mov al, [num_buffer]
-	mov [repeats], al
+    mov al, [num_buffer]        ; Move num_buffer value to al
+    mov [repeats], al           ; Store al value in repeats
 
-	cmp word [num_buffer], 1					; Min 1 repeat
-	jl floppy2ram_repeat
+    cmp word [num_buffer], 1    ; Compare num_buffer with 1 (minimum 1 repeat)
+    jl floppy2ram_repeat        ; Jump if less than to 'floppy2ram_repeat'
 
-	cmp word [num_buffer], 30000				; Max 30000 repeats
-	jg floppy2ram_repeat
+    cmp word [num_buffer], 30000 ; Compare num_buffer with 30000 (maximum 30000 repeats)
+    jg floppy2ram_repeat        ; Jump if greater than to 'floppy2ram_repeat'
 
-	cmp byte [ret_val], 2						; Overflow (val > 32767)
-	je floppy2ram_repeat
-	
-	cmp byte [ret_val], 1						; ESC hit
-	je start
+    cmp byte [ret_val], 2       ; Compare ret_val with 2 (overflow - val > 32767)
+    je floppy2ram_repeat        ; Jump to 'floppy2ram_repeat' if equal
 
-	call cursor_newline
-	call read_sts
+    cmp byte [ret_val], 1       ; Compare ret_val with 1 (ESC key hit)
+    je start                    ; Jump to 'start' if equal
 
-	call cursor_newline
-	call read_address
+    call cursor_newline         ; Move cursor to a new line
+    call read_sts               ; Call function to read status
 
-	cmp byte [ret_val], 1
-	je start
+    call cursor_newline         ; Move cursor to a new line
+    call read_address           ; Call function to read an address
 
-	;setting up the interrupt
-	mov ah, 0x02
-	mov al, [repeats]
-	mov ch, [track]
-	mov cl, [sector]
-	mov dl, 0
-	mov dh, [side]
-	mov bx, [segment_word]
-	mov es, bx
-	mov bx, [address_word]
-	int 0x13
-	push ax
-	call cursor_newline
-	pop ax
-	cmp ah, 0
-	jnz floppy2ram_error
+    cmp byte [ret_val], 1       ; Compare ret_val with 1
+    je start                    ; Jump to 'start' if equal
+
+    ; Setting up the interrupt for disk I/O
+    mov ah, 0x02                ; Set up interrupt function for disk I/O
+    mov al, [repeats]           ; Set number of repeats
+    mov ch, [track]             ; Set track number
+    mov cl, [sector]            ; Set sector number
+    mov dl, 0                   ; Set drive number (0 for floppy)
+    mov dh, [side]              ; Set side number
+    mov bx, [segment_word]      ; Set up segment word
+    mov es, bx                  ; Set ES to segment
+    mov bx, [address_word]      ; Set up address word
+    int 0x13                    ; Trigger disk I/O interrupt
+    push ax                     ; Push ax onto the stack
+    call cursor_newline         ; Move cursor to a new line
+    pop ax                      ; Pop value from stack to ax
+    cmp ah, 0                   ; Compare ah with 0
+    jnz floppy2ram_error        ; Jump if not zero to 'floppy2ram_error'
+
 floppy2ram_success:
-	mov word [print_addr], floppy2ram_success_msg
-	call print_str
-	mov bx, [segment_word]
-	mov es, bx
-	mov bp, [address_word]
-	call print_ram_sectors
-	jmp start
+    mov word [print_addr], floppy2ram_success_msg ; Store success message address
+    call print_str              ; Call function to print a string
+    mov bx, [segment_word]      ; Move segment_word value to bx
+    mov es, bx                  ; Set ES to bx (segment)
+    mov bp, [address_word]      ; Move address_word value to bp
+    call print_ram_sectors      ; Call function to print RAM sectors
+    jmp start                   ; Jump to 'start'
+
 floppy2ram_error:
-	mov word [print_addr], floppy2ram_error_msg
-	push ax
-	call print_str
-	pop ax
-	mov bl, ah
-	call phex
-	mov ah, 0x00
-	int 0x16
-	jmp start
+    mov word [print_addr], floppy2ram_error_msg ; Store error message address
+    push ax                     ; Push ax onto the stack
+    call print_str              ; Call function to print a string
+    pop ax                      ; Pop value from stack to ax
+    mov bl, ah                  ; Move ah value to bl
+    call phex                   ; Call function to print hexadecimal value
+    mov ah, 0x00                ; Set ah to 0x00
+    int 0x16                    ; BIOS interrupt for keyboard services
+    jmp start                   ; Jump to 'start'
+
 
 ram_to_floppy:
-	call cursor_newline
-	call read_address
-	cmp byte [ret_val], 1
-	je start
+    ; Start of the code block
 
-	call cursor_newline
-	mov word [print_addr], byte_prompt
-	call print_str
-	call cursor_newline
+    call cursor_newline     ; Call function to move cursor to a new line
+    call read_address       ; Call function to read an address
+    cmp byte [ret_val], 1   ; Compare value at ret_val with 1
+    je start                ; Jump to 'start' if the comparison is equal (zero)
+
+    call cursor_newline     ; Move cursor to a new line
+    mov word [print_addr], byte_prompt  ; Store byte_prompt in print_addr
+    call print_str          ; Call function to print a string
+    call cursor_newline     ; Move cursor to a new line
 
 ram_byte_count_read:
-	call clear_current_line
-	mov byte [char_count], 5
-	call read_int
+    call clear_current_line ; Call function to clear the current line
+    mov byte [char_count], 5 ; Set char_count to 5
+    call read_int           ; Call function to read an integer
 
-	cmp word [num_buffer], 1					; Min 1 byte
-	jl ram_byte_count_read
-	
-	cmp byte [ret_val], 2						; Overflow (val > 32767)
-	je ram_byte_count_read
-	
-	cmp byte [ret_val], 1						; ESC hit
-	je start
-	
-	mov ax, word [num_buffer]
-	mov word [byte_count], ax
-	
-	call cursor_newline
-	call read_sts
+    cmp word [num_buffer], 1 ; Compare num_buffer with 1 (minimum 1 byte)
+    jl ram_byte_count_read  ; Jump if less than to 'ram_byte_count_read'
 
-	call ram_write_mem
-	push ax
-	call cursor_newline
-	pop ax
-	cmp ah, 0
-	je ram_to_floppy_success
+    cmp byte [ret_val], 2   ; Compare ret_val with 2 (overflow - value > 32767)
+    je ram_byte_count_read  ; Jump to 'ram_byte_count_read' if equal
+
+    cmp byte [ret_val], 1   ; Compare ret_val with 1 (ESC key hit)
+    je start                ; Jump to 'start' if equal
+
+    mov ax, word [num_buffer] ; Move num_buffer value to ax
+    mov word [byte_count], ax ; Store ax value in byte_count
+
+    call cursor_newline     ; Move cursor to a new line
+    call read_sts           ; Call function to read status
+
+    call ram_write_mem      ; Call function to write to RAM
+    push ax                 ; Push ax onto the stack
+    call cursor_newline     ; Move cursor to a new line
+    pop ax                  ; Pop value from stack to ax
+    cmp ah, 0               ; Compare ah with 0
+    je ram_to_floppy_success ; Jump to 'ram_to_floppy_success' if equal
 
 ram_to_floppy_fail:
-	mov word [print_addr], ram_to_floppy_fail_msg
-	push ax
-	call print_str
-	pop ax
-	mov bl, ah
-	call phex
-	jmp key_to_floppy_end
-	
+    mov word [print_addr], ram_to_floppy_fail_msg ; Store fail message address
+    push ax                 ; Push ax onto the stack
+    call print_str          ; Call function to print a string
+    pop ax                  ; Pop value from stack to ax
+    mov bl, ah              ; Move ah value to bl
+    call phex               ; Call function to print hexadecimal value
+    jmp key_to_floppy_end   ; Jump to 'key_to_floppy_end'
+
 ram_to_floppy_success:
-	mov word [print_addr], ram_to_floppy_success_msg
-	call print_str
+    mov word [print_addr], ram_to_floppy_success_msg ; Store success message address
+    call print_str          ; Call function to print a string
 
 ram_to_floppy_end:
-	mov ah, 0x00
-	int 0x16
-	jmp start
+    mov ah, 0x00            ; Move value 0x00 to ah
+    int 0x16                ; Software interrupt (interrupt 16h, BIOS keyboard services)
+    jmp start               ; Jump to 'start'
+
 
 times 510 - ($ - $$) db 0						; Pad to 510 bytes
 dw 0xaa55										; Boot signature at byte 511, 512
