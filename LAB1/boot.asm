@@ -76,18 +76,18 @@ int 10h
 mov AH, 13h
 mov AL, 1
 mov BH, 0
-mov BL, 0x07 ; Standard color
-mov DH, 7
-mov DL, 0
+mov BL, 0x21 ; Standard color
+mov DH, 17
+mov DL, 35
 lea BP, MsgMethod7
 mov CX, 14   ; Account for character + attribute for each byte, in my case 7 characters
 int 10h
 
 ; Data segment
-MsgMethod4 db 'D'
-MsgMethod5 db 'R'
-MsgMethod6 db 'S', 0x07, 'Y', 0x07, 'S', 0x07, 'T', 0x07, 'E', 0x07, 'M', 0x07, '1', 0x07  
-MsgMethod7 db 'S', 0x07, 'Y', 0x07, 'S', 0x07, 'T', 0x07, 'E', 0x07, 'M', 0x07, '2', 0x07
+MsgMethod4 db '+'
+MsgMethod5 db '!'
+MsgMethod6 db '2', 0x07, 'Y', 0x07, 'S', 0x07, 'T', 0x07, 'E', 0x07, 'M', 0x07, '1', 0x07  
+MsgMethod7 db '1', 0x07, 'Y', 0x07, 'S', 0x07, 'T', 0x07, 'E', 0x07, 'M', 0x07, '2', 0x07
 
 ; End of program
 int 20h

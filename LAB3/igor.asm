@@ -1,7 +1,7 @@
 org 0x7c00
 
 section .data
-    message: times 10 db "@@@FAF-213 Mihailiuc Igor###"
+    message: times 10 db "@@@FAF+213 Mihailiuc Igor###"
 
 section .text
     global _start
