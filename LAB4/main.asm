@@ -156,14 +156,14 @@ print_character:  ; Label for printing a character.
     cmp SI, buffer + 99  ; Check if SI is at the end of the buffer.
     je typing    ; If so, jump back to reading user input.
 
-    cmp AL, 41h
-    jl not_uppercase       ; If the character is not an uppercase letter, continue reading user input.
-    cmp AL, 5ah
-    jg not_uppercase       ; If the character is not an uppercase letter, continue reading user input.
+    cmp AL, 61h
+    jl uppercase       ; If the character is not a lowercase letter, continue reading user input.
+    cmp AL, 7ah
+    jg uppercase       ; If the character is not a lowercase letter, continue reading user input.
 
-    jmp increment_n_buffer ; If the character is an uppercase letter, jump to increment_n_buffer.
+    jmp increment_n_buffer ; If the character is a lowercase letter, jump to increment_n_buffer.
 
-not_uppercase:
+uppercase:
     mov [SI], AL  ; Store the entered character in the buffer.
     inc SI    ; Increment SI to move to the next buffer position.
 
